@@ -20,11 +20,13 @@ static final class Node {
  static final int SIGNAL    = -1;
  static final int CONDITION = -2;
  static final int PROPAGATE = -3;
-
+ //----属性变量----------
+ Node nextWaiter; //和condition有关
  volatile int waitStatus; //当前节点状态
  volatile Node prev; //前驱
  volatile Node next; //后继
  volatile Thread thread; //持有的线程对象
+ 
 }
 ```
 - AQS结构
