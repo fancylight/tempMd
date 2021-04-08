@@ -24,6 +24,47 @@ tags: 工作记录
 
 ```
 ## spring相关
+### @Import注解的使用
+- @Import注解的处理在`ConfigurationClassParser#processImports`函数中
+- 该注解作用,会取该注解的value标注的类
+    - 当类为ImportSelector,实际上就是第一个delegate,继续处理
+    - 当类是ImportBeanDefinitionRegistrar,处理内部,注册更多的bd
+    - 其他情况下,会将该类当作被标注了`@Configuration`
+- 结合上述情况三,在项目内可以实现一个`@Enable`注解
+```java
+@Import(OperationConfig.class)
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface EnableOperationLog {
+}
+//配置类
+//此处不需要写@Configuration注解
+public class OperationConfig {
+    @Bean
+    public SimpleJdbc simpleJdbc(){
+        return new SimpleJdbc();
+    }
+    @Bean
+    public OperationLog operationLog(){
+        OperationLog operationLog = new OperationLog();
+        return operationLog;
+    }
+    @Bean
+    public OperationAspect operationAspect(){
+        return new OperationAspect();
+    }
+    @Bean
+    public MybatisPlusInterceptor addInnerLogInterceptor(MybatisPlusInterceptor mybatisPlusInterceptor, OperationLog operationLog, SimpleJdbc simpleJdbc) {
+        InnerOpLogInterceptor innerOpLogInterceptor = new InnerOpLogInterceptor();
+        innerOpLogInterceptor.setOperationLog(operationLog);
+        innerOpLogInterceptor.setSimpleJdbc(simpleJdbc);
+        mybatisPlusInterceptor.addInnerInterceptor(innerOpLogInterceptor);
+        return mybatisPlusInterceptor;
+    }
+}
+```    
+- @Bean注解修饰的方法,返回值对象,可以在其内部使用`@Autowired`,`@Value`等注解,原因是这两个注解生效的时期是ioc对象构造之后,通过Postprocessor处理的
 ### aop
 - 切面表达式复习
 ## spring-cloud相关
