@@ -118,6 +118,7 @@ public class OperationConfig {
 ## redis
 ### 分布式锁
 redisson:java的redis客户端,提供了锁等机制
+[参考文章](https://xiaomi-info.github.io/2019/12/17/redis-distributed-lock/)
 ### redis的key设计原则
 ## 杂项
 ### 设计
