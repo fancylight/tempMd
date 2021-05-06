@@ -23,6 +23,8 @@ tags: 工作记录
                      application-master      applicaiton-shop
 
 ```
+## java部分
+- BigDecimal
 ## spring相关
 ### @Import注解的使用
 - @Import注解的处理在`ConfigurationClassParser#processImports`函数中
@@ -73,6 +75,9 @@ public class OperationConfig {
 - 访问代理 Feign: 客户端调用通过注解避免Rest请求代码
 - 熔断器 Hystrix:
 - Zuul 网关
+### feign
+@FeignClient(name = "member-service-test",contextId = "service1")
+使用contextId当作beanName,解决重复名称
 ## jwt
 - 关于token的原理
 - jwt的使用
@@ -86,6 +91,21 @@ public class OperationConfig {
 - 实现动态刷新sql文件
 - xml语法学习
 - mybatis拦截器实现,以及如何获取最终的sql(拦截器中获取的sql是带有占位符的)
+### bug记录
+有这么这个现象,mybaitsPlus内部的拦截器:`MybatisPlusInterceptor`将内部拦截器`InnerInterceptor`添加(代理模式),如果使用以下代码
+```
+        //注意此处的mybatisPlusInterceptor会被增强成代理对象proxy,在内部调用的Plugin.wrap函数最终会导致错误,不用使用这种方式
+        //我出现的问题时当使用分页拦截器,由于此原因导致分页失败
+   @Bean
+    public MybatisPlusInterceptor addInnerLogInterceptor(MybatisPlusInterceptor mybatisPlusInterceptor,OperationLog operationLog, SimpleJdbc simpleJdbc) {
+        InnerOpLogInterceptor innerOpLogInterceptor = new InnerOpLogInterceptor();
+        innerOpLogInterceptor.setOperationLog(operationLog);
+        innerOpLogInterceptor.setSimpleJdbc(simpleJdbc);
+        mybatisPlusInterceptor.addInnerInterceptor(innerOpLogInterceptor);
+        return mybatisPlusInterceptor;
+    }
+
+```
 [获取最终sql](https://blog.csdn.net/w254826019/article/details/109745097)
 - mybatis内部源码阅读
 ## http协议
@@ -96,12 +116,17 @@ public class OperationConfig {
 ## Validator
 这里使用了自定义实现,并没有使用注解,但是他这个实现并没有完成.
 ## redis
+### 分布式锁
+redisson:java的redis客户端,提供了锁等机制
 ### redis的key设计原则
 ## 杂项
 ### 设计
 - 使用DTO作为入参和整体传递的实体(验证是否是正确的设计)
 ### fastjson
 - 如何使用fastjson该api
+### lambok 
+- @Accessors(chain = true):会导致生成的set函数返回值非void,这种情况BeanUtils.populate(common.BeanUtils)和mybatis-plus类似的方法都不能使用,前者内部使用了java内省,那里会判断set函数有返回值则跳过
+- 由该工具生成的set|get函数有可能不正确, 一个实体包含`iState`最终生成了`setIState`
 ## 权限相关
 ### 系统实现概述
 - 顺序: `WebInterceptor`--->`PermissionAspect`校验
@@ -115,3 +140,21 @@ public class OperationConfig {
 - vue的原理
 - webpack相关
 - vue项目结构
+## mySql相关
+### 函数
+`FIND_IN_SET(str,strlist)`: str为字符串,strList为,分割的字符串,此函数会返回str在strList中的下标(1-->N).
+```sql
+--- 返回2()
+select  FIND_IN_SET('2','1,2,3'); 
+```
+该函数的两个参数可以为变量,即列,存在一个type列为('1,2,3,4')这种分割的数据,
+|type|
+|---|
+|1,2,3|
+|1,2|
+查询类型包含1的语句为`select * FROM test FIND_IN_SET('1',type)`
+|name|
+|---|
+|1|
+|2|
+如果语句这么写`select * FROM test FIND_IN_SET(name,'1,2')`这个效果和`name in (1,2)`
